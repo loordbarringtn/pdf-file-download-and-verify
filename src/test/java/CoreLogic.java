@@ -7,6 +7,9 @@ import org.openqa.selenium.NoSuchElementException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
+import java.io.IOException;
+
 import static com.codeborne.selenide.Selenide.$;
 
 public class CoreLogic {
@@ -18,13 +21,11 @@ public class CoreLogic {
     public String disclosure = "//li[@class='lg-menu__item lg-menu__item_hovered']//a[contains(.,'Регуляторное раскрытие информации')]";
     public String corpCharAndOthDoc = "//img[@alt='Устав и иные документы Банка']";
     public String codeOfCorpEthics = "//a[@href='/common/img/uploaded/files/pdf/normative_docs/Sberbank_Code_of_corporate_ethics.pdf']";
-    public String downloadFolder = "build";
-    String findingText = "Кодекс корпоративной этики Группы Сбербанк одобрен Правлением Банка\n" +
+    public static String downloadFolder = "build";
+    public static String findingText = "Кодекс корпоративной этики Группы Сбербанк одобрен Правлением Банка\n" +
             "30 сентября 2015 года (постановление Правления No534§6а), утвержден решением Наблюдательного совета Банка 29 октября 2015 года (протокол No52).";
-
-
-    FileDownloadFromWeb fileDownloadFromWeb = new FileDownloadFromWeb();
-    OperationsWithPDF operationsWithPDF = new OperationsWithPDF();
+    public static String pdfFileToOpen;
+    public static String pdfFileToOpenFileName;
 
     public void clickOnElement (String elementXpath){
         try {
@@ -34,6 +35,46 @@ public class CoreLogic {
         } catch (ElementNotFound elementNotFound) {
             log.error("Элемент: \"{}\"", elementXpath);
             throw new NoSuchElementException(elementNotFound.getMessage());
+        }
+    }
+
+    public static void downloadPDFFile (String urlWithPdfFile){
+        FileDownloadFromWeb fileDownloadFromWeb = new FileDownloadFromWeb();
+        Logger log = LoggerFactory.getLogger(CoreLogic.class.getName());
+
+        try {
+            fileDownloadFromWeb.ifDirectoryExists(downloadFolder, "downloads");
+        } catch (IOException error) {
+            error.printStackTrace();
+        }
+
+        File fileDownloadPath = new File (fileDownloadFromWeb.getFileAbsolutePath(downloadFolder) +
+                File.separator + "downloads" + File.separator + fileDownloadFromWeb.getCurrentDateAndTime() + ".pdf");
+        String getDownloadedFileName = fileDownloadPath.getName();
+
+        Thread thread = new Thread(new FileDownloadFromWeb(urlWithPdfFile, fileDownloadPath));
+        log.info("Имя для скаченного файла: \"{}\"", getDownloadedFileName);
+        thread.start();
+
+        while (thread.isAlive()){}
+
+        pdfFileToOpen = fileDownloadFromWeb.getFileAbsolutePath(downloadFolder) +
+                File.separator + "downloads" + File.separator + getDownloadedFileName;
+        pdfFileToOpenFileName= pdfFileToOpen.substring(pdfFileToOpen.length() - 21);
+        log.info("Приступаем к открытию файла \"{}\"", pdfFileToOpen);
+        fileDownloadFromWeb.ifFileExists(pdfFileToOpen);
+    }
+
+    public static void pdfVerify () throws IOException {
+        OperationsWithPDF operationsWithPDF = new OperationsWithPDF();
+        boolean verificationResult = operationsWithPDF.verifyPDFContent(findingText, pdfFileToOpen);
+        Logger log = LoggerFactory.getLogger(CoreLogic.class.getName());
+
+        log.info("Результат сравнения исходного текста с текстом в PDF: \"{}\"",verificationResult);
+        if (verificationResult){
+            log.info("Результат верификации файла \"{}\" положительный!", pdfFileToOpenFileName);
+        } else {
+            log.info("Результат верификации файла \"{}\" отрицательный!", pdfFileToOpenFileName);
         }
     }
 

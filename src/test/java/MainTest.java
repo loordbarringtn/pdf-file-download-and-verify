@@ -34,36 +34,7 @@ public class MainTest extends CoreLogic {
         log.info("URL страницы с PDF файлом: \"{}\"", urlWithPdfFile);
         Assert.assertTrue(urlWithPdfFile.contains(".pdf"));
         log.info("Проверили наличие в URL расширения \"pdf\"");
-
-        try {
-            fileDownloadFromWeb.ifDirectoryExists(downloadFolder, "downloads");
-        } catch (IOException error) {
-            error.printStackTrace();
-        }
-
-        File fileDownloadPath = new File (fileDownloadFromWeb.getFileAbsolutePath(downloadFolder) +
-                File.separator + "downloads" + File.separator + fileDownloadFromWeb.getCurrentDateAndTime() + ".pdf");
-        String getDownloadedFileName = fileDownloadPath.getName();
-
-        Thread thread = new Thread(new FileDownloadFromWeb(urlWithPdfFile, fileDownloadPath));
-        log.info("Имя для скаченного файла: \"{}\"", getDownloadedFileName);
-        thread.start();
-
-        while (thread.isAlive()){}
-
-        String pdfFileToOpen = fileDownloadFromWeb.getFileAbsolutePath(downloadFolder) +
-                File.separator + "downloads" + File.separator + getDownloadedFileName;
-        final String pdfFileToOpenFileName= pdfFileToOpen.substring(pdfFileToOpen.length() - 21);
-        log.info("Приступаем к открытию файла \"{}\"", pdfFileToOpen);
-        fileDownloadFromWeb.ifFileExists(pdfFileToOpen);
-
-        boolean verificationResult = operationsWithPDF.verifyPDFContent(findingText, pdfFileToOpen);
-
-        log.info("Результат сравнения исходного текста с текстом в PDF: \"{}\"",verificationResult);
-        if (verificationResult){
-            log.info("Результат верификации файла \"{}\" положительный!", pdfFileToOpenFileName);
-        } else {
-            log.info("Результат верификации файла \"{}\" отрицательный!", pdfFileToOpenFileName);
-        }
+        downloadPDFFile(urlWithPdfFile);
+        pdfVerify();
     }
 }
