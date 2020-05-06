@@ -1,9 +1,7 @@
-import Tools.FileDownloadFromWeb;
 import com.codeborne.selenide.Configuration;
 import org.junit.Assert;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import java.io.File;
 import java.io.IOException;
 import static com.codeborne.selenide.Selenide.*;
 
